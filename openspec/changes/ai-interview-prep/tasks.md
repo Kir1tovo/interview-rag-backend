@@ -1,15 +1,15 @@
 ## 1. 项目初始化
 
-- [ ] 1.1 创建后端 Spring Boot 工程骨架（interview-prep-backend），配置 Maven、Spring Boot 3.3、MyBatis-Plus、PostgreSQL、Redis 依赖
-- [ ] 1.2 创建前端 Vue 3 工程骨架（interview-prep-frontend），配置 Vite、Vue Router、Element Plus、Axios
-- [ ] 1.3 配置 PostgreSQL 数据库，创建数据库并启用 pgvector 扩展
-- [ ] 1.4 配置 Redis 连接
-- [ ] 1.5 配置 Spring AI DeepSeek 和通义千问 DashScope 集成
-- [ ] 1.6 搭建统一响应封装、全局异常处理、跨域配置
+- [x] 1.1 创建后端 Spring Boot 工程骨架（interview-prep-backend），配置 Maven、Spring Boot 3.3、MyBatis-Plus、PostgreSQL、Redis 依赖
+- [x] 1.2 创建前端 Vue 3 工程骨架（interview-prep-frontend），配置 Vite、Vue Router、Element Plus、Axios
+- [x] 1.3 配置 PostgreSQL 数据库，创建数据库并启用 pgvector 扩展
+- [x] 1.4 配置 Redis 连接
+- [x] 1.5 配置 Spring AI DeepSeek 和通义千问 DashScope 集成
+- [x] 1.6 搭建统一响应封装、全局异常处理、跨域配置
 
 ## 2. 用户认证模块（user-auth）
 
-- [ ] 2.1 创建 sys_user 表和对应实体类、Mapper
+- [x] 2.1 创建 sys_user 表和对应实体类、Mapper
 - [ ] 2.2 实现用户注册接口（密码 BCrypt 加密）
 - [ ] 2.3 实现用户登录接口，生成 JWT Token
 - [ ] 2.4 实现 JWT Token 拦截器/过滤器，接口鉴权

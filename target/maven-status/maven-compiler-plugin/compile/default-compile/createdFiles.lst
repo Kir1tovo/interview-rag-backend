@@ -1,2 +1,6 @@
+com\rhy\interviewprep\common\Result.class
 com\rhy\interviewprep\controller\HealthController.class
-com\rhy\interviewprep\InterviewPrepApplication.class
+com\rhy\interviewprep\common\BusinessException.class
+com\rhy\interviewprep\common\GlobalExceptionHandler.class
+com\rhy\interviewprep\config\CorsConfig.class
+com\rhy\interviewprep\common\ErrorCode.class
