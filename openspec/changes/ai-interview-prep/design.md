@@ -50,6 +50,7 @@
 | 构建工具 | Maven | 稳定、资料多 | Gradle |
 | 认证方案 | JWT + Redis（黑名单） | 无状态 + 可控的注销机制 | Session Cookie |
 | 前端框架 | Vue 3 + Element Plus | 国内流行、组件库完善 | React + Ant Design |
+| OCR 服务 | 百度 OCR / 阿里云 OCR | 中文识别准确率高、API 稳定、Spring Boot 集成方便 | Tesseract（开源，识别率低）|
 
 ### 2. 系统架构
 
