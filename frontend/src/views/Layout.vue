@@ -32,6 +32,7 @@
     <el-container>
       <el-header>
         <div class="header-right">
+          <span class="username">{{ currentUsername }}</span>
           <el-button text @click="handleLogout">退出登录</el-button>
         </div>
       </el-header>
@@ -44,12 +45,32 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Document, EditPen, User, DataAnalysis, Reading, Search } from '@element-plus/icons-vue'
+import request from '@/utils/request'
+import { getUsername, clearLoginInfo } from '@/utils/auth'
 
 const router = useRouter()
+const currentUsername = getUsername()
 
-const handleLogout = () => {
-  localStorage.removeItem('token')
+const handleLogout = async () => {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return // 取消
+  }
+
+  try {
+    await request.post('/logout')
+  } catch {
+    // 即使接口失败也前端退出
+  }
+  clearLoginInfo()
+  ElMessage.success('已退出登录')
   router.push('/login')
 }
 </script>
@@ -74,5 +95,14 @@ const handleLogout = () => {
   justify-content: flex-end;
   align-items: center;
   border-bottom: 1px solid #e6e6e6;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.username {
+  color: #606266;
+  font-size: 14px;
 }
 </style>

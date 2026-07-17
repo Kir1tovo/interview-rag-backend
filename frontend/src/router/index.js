@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { getToken } from '@/utils/auth'
 
 const routes = [
   {
@@ -67,7 +68,7 @@ const router = createRouter({
 // 路由守卫：未登录跳转登录页
 router.beforeEach((to, from, next) => {
   document.title = to.meta.title || 'AI 面试准备平台'
-  const token = localStorage.getItem('token')
+  const token = getToken()
   if (!token && to.path !== '/login' && to.path !== '/register') {
     next('/login')
   } else {
