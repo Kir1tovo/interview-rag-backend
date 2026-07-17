@@ -21,8 +21,8 @@
 ## 3. JD 智能解析模块（jd-parsing）
 
 - [x] 3.1 创建 job_description 表和对应实体类、Mapper
-- [ ] 3.2 设计 JD 解析的 System Prompt 和输出 JSON Schema
-- [ ] 3.3 集成 OCR 服务（百度 OCR / 阿里云 OCR），实现图片文字识别
+- [x] 3.2 设计 JD 解析的 System Prompt 和输出 JSON Schema
+- [ ] 3.3 实现上传图片的公共类，集成 OCR 服务（智谱orc），实现图片文字识别
 - [ ] 3.4 实现 JD 解析服务：先调用 OCR 识别图片文本，再调用 DeepSeek 提取结构化信息
 - [ ] 3.5 实现 JD 解析结果缓存（Redis，按识别文本哈希）
 - [ ] 3.6 实现 JD 列表查询接口（分页，按用户）
