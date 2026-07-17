@@ -9,7 +9,7 @@
 
 ## 2. 用户认证模块（user-auth）
 
-- [x] 2.1 创建 sys_user 表和对应实体类、Mapper
+- [x] 2.1 创建 sys\_user 表和对应实体类、Mapper
 - [x] 2.2 实现用户注册接口（密码 BCrypt 加密）
 - [x] 2.3 实现用户登录接口，生成 JWT Token
 - [x] 2.4 实现 JWT Token 拦截器/过滤器，接口鉴权
@@ -20,22 +20,22 @@
 
 ## 3. JD 智能解析模块（jd-parsing）
 
-- [x] 3.1 创建 job_description 表和对应实体类、Mapper
+- [x] 3.1 创建 job\_description 表和对应实体类、Mapper
 - [x] 3.2 设计 JD 解析的 System Prompt 和输出 JSON Schema
-- [ ] 3.3 实现上传图片的公共类，集成 OCR 服务（智谱orc），实现图片文字识别
-- [ ] 3.4 实现 JD 解析服务：先调用 OCR 识别图片文本，再调用 DeepSeek 提取结构化信息
+- [x] 3.3 实现处理图片的工具类，集成 OCR 服务（智谱orc），实现图片转为base64后的文字识别
+- [x] 3.4 实现 JD 解析服务：先调用 OCR 识别图片文本，再调用 DeepSeek 提取结构化信息
 - [ ] 3.5 实现 JD 解析结果缓存（Redis，按识别文本哈希）
-- [ ] 3.6 实现 JD 列表查询接口（分页，按用户）
-- [ ] 3.7 实现 JD 详情查询接口
-- [ ] 3.8 实现 JD 删除接口
-- [ ] 3.9 前端：JD 列表页面
-- [ ] 3.10 前端：JD 解析页面（上传图片 + OCR 识别结果 + 解析结果展示）
-- [ ] 3.11 前端：JD 详情页面
+- [x] 3.6 实现 JD 列表查询接口（分页，按用户）
+- [x] 3.7 实现 JD 详情查询接口
+- [x] 3.8 实现 JD 删除接口
+- [x] 3.9 前端：JD 列表页面
+- [x] 3.10 前端：JD 解析页面（上传图片 + OCR 识别结果 + 解析结果展示）
+- [x] 3.11 前端：JD 详情页面
 
 ## 4. 用户技能与匹配分析模块（match-analysis）
 
-- [ ] 4.1 创建 user_skill 表和对应实体类、Mapper
-- [ ] 4.2 创建 match_analysis 表和对应实体类、Mapper
+- [ ] 4.1 创建 user\_skill 表和对应实体类、Mapper
+- [ ] 4.2 创建 match\_analysis 表和对应实体类、Mapper
 - [ ] 4.3 实现用户技能 CRUD 接口（添加、修改、删除、列表）
 - [ ] 4.4 实现匹配度计算服务：技能匹配算法
 - [ ] 4.5 实现匹配分析生成接口（基于 DeepSeek 生成分析报告和优先级建议）
@@ -46,7 +46,7 @@
 
 ## 5. 个性化学习计划模块（learning-plan）
 
-- [ ] 5.1 创建 learning_plan 表和对应实体类、Mapper
+- [ ] 5.1 创建 learning\_plan 表和对应实体类、Mapper
 - [ ] 5.2 设计学习计划 System Prompt 和输出 JSON Schema
 - [ ] 5.3 实现学习计划生成服务：调用 DeepSeek 生成阶段化学习计划
 - [ ] 5.4 实现学习计划查询接口
@@ -57,7 +57,7 @@
 
 ## 6. 面经知识库 RAG 模块（interview-rag）
 
-- [ ] 6.1 创建 interview_question 表（含 vector 字段）和对应实体类、Mapper
+- [ ] 6.1 创建 interview\_question 表（含 vector 字段）和对应实体类、Mapper
 - [ ] 6.2 配置通义千问 Embedding 模型
 - [ ] 6.3 实现面经题目批量导入服务（文本解析 + 生成向量 + 入库）
 - [ ] 6.4 实现 pgvector 向量检索服务
@@ -87,3 +87,4 @@
 - [ ] 8.2 数据库初始化脚本整理
 - [ ] 8.3 核心功能演示录屏/截图
 - [ ] 8.4 简历项目描述整理
+

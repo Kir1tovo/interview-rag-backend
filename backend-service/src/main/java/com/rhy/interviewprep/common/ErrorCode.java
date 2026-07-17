@@ -30,6 +30,9 @@ public enum ErrorCode {
 
     AI_SERVICE_ERROR(7001, "AI服务调用失败"),
     AI_API_KEY_INVALID(7002, "AI API Key无效"),
+    OCR_RECOGNITION_ERROR(7003, "OCR识别失败"),
+    OCR_IMAGE_INVALID(7004, "图片格式或大小不符合要求"),
+    OCR_SERVICE_UNAVAILABLE(7005, "OCR服务不可用"),
 
     DATABASE_ERROR(8001, "数据库操作失败"),
     DATA_VALIDATION_ERROR(8002, "数据校验失败");

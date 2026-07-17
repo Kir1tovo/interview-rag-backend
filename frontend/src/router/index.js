@@ -33,6 +33,12 @@ const routes = [
         meta: { title: 'JD 解析' }
       },
       {
+        path: 'jd/detail/:id',
+        name: 'JdDetail',
+        component: () => import('@/views/jd/JdDetail.vue'),
+        meta: { title: 'JD 详情' }
+      },
+      {
         path: 'skill',
         name: 'SkillManage',
         component: () => import('@/views/skill/SkillManage.vue'),
