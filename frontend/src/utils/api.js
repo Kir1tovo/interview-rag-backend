@@ -30,3 +30,13 @@ export const learningPlanApi = {
   listByJd: (jdId) => request.get(`/learning-plan/list/${jdId}`),
   delete: (planId) => request.delete(`/learning-plan/${planId}`)
 }
+
+export const interviewApi = {
+  search: (data) => request.post('/interview/search', data),
+  list: (params) => request.get('/interview/list', { params }),
+  detail: (id) => request.get(`/interview/${id}`),
+  similar: (id, params) => request.get(`/interview/${id}/similar`, { params }),
+  importFile: (formData) => request.post('/interview/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}

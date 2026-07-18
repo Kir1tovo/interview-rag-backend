@@ -67,6 +67,18 @@ const routes = [
         name: 'InterviewSearch',
         component: () => import('@/views/interview/InterviewSearch.vue'),
         meta: { title: '面经检索' }
+      },
+      {
+        path: 'interview/list',
+        name: 'InterviewList',
+        component: () => import('@/views/interview/InterviewList.vue'),
+        meta: { title: '面经题库' }
+      },
+      {
+        path: 'interview/detail/:id',
+        name: 'InterviewDetail',
+        component: () => import('@/views/interview/InterviewDetail.vue'),
+        meta: { title: '题目详情' }
       }
     ]
   }

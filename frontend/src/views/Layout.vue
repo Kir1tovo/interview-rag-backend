@@ -27,10 +27,14 @@
           <el-icon><Reading /></el-icon>
           <span>学习计划</span>
         </el-menu-item>
-        <el-menu-item index="/interview">
-          <el-icon><Search /></el-icon>
-          <span>面经检索</span>
-        </el-menu-item>
+        <el-sub-menu index="/interview">
+          <template #title>
+            <el-icon><Search /></el-icon>
+            <span>面经知识库</span>
+          </template>
+          <el-menu-item index="/interview">语义检索</el-menu-item>
+          <el-menu-item index="/interview/list">题库列表</el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
     <el-container>
