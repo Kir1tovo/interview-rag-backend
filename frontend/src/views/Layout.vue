@@ -15,10 +15,14 @@
           <el-icon><User /></el-icon>
           <span>技能管理</span>
         </el-menu-item>
-        <el-menu-item index="/match">
-          <el-icon><DataAnalysis /></el-icon>
-          <span>匹配分析</span>
-        </el-menu-item>
+        <el-sub-menu index="/match">
+          <template #title>
+            <el-icon><DataAnalysis /></el-icon>
+            <span>匹配分析</span>
+          </template>
+          <el-menu-item index="/match">分析</el-menu-item>
+          <el-menu-item index="/match/history">历史记录</el-menu-item>
+        </el-sub-menu>
         <el-menu-item index="/plan">
           <el-icon><Reading /></el-icon>
           <span>学习计划</span>

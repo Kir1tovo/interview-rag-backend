@@ -143,11 +143,14 @@
 | id | bigint | 主键 |
 | user_id | bigint | 用户 ID |
 | jd_id | bigint | JD ID |
-| match_score | decimal | 总体匹配度 |
+| match_score | decimal(5,2) | 总体匹配度 |
+| jd_match_score | decimal(5,2) | 技术栈匹配度 |
+| soft_skill_score | decimal(5,2) | 软技能匹配度 |
 | mastered_json | jsonb | 已掌握技能列表 |
 | need_improve_json | jsonb | 需要加强技能列表 |
 | not_known_json | jsonb | 完全不会技能列表 |
 | priority_json | jsonb | 优先级建议 |
+| analysis_report | text | AI分析报告 |
 | created_at | datetime | 创建时间 |
 
 **learning_plan（学习计划表）**

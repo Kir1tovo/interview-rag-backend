@@ -51,6 +51,12 @@ const routes = [
         meta: { title: '匹配分析' }
       },
       {
+        path: 'match/history',
+        name: 'MatchHistory',
+        component: () => import('@/views/match/MatchHistory.vue'),
+        meta: { title: '匹配历史' }
+      },
+      {
         path: 'plan',
         name: 'LearningPlan',
         component: () => import('@/views/plan/LearningPlan.vue'),

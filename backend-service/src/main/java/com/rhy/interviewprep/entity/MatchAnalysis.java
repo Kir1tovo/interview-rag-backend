@@ -22,6 +22,8 @@ public class MatchAnalysis {
 
     private Double jdMatchScore;
 
+    private Double softSkillScore;
+
     private Double matchScore;
 
     @TableField(typeHandler = JacksonTypeHandler.class)
@@ -35,6 +37,8 @@ public class MatchAnalysis {
 
     @TableField(typeHandler = JacksonTypeHandler.class)
     private String priorityJson;
+
+    private String analysisReport;
 
     private LocalDateTime createdAt;
 }
