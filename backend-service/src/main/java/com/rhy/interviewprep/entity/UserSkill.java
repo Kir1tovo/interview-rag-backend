@@ -18,11 +18,7 @@ public class UserSkill {
 
     private String skillName;
 
-    private String skillLevel;
-
-    private Integer experienceYears;
+    private Integer level;
 
     private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
 }

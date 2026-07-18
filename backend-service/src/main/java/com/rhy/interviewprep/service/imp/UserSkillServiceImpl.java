@@ -27,10 +27,8 @@ public class UserSkillServiceImpl implements UserSkillService {
         UserSkill skill = new UserSkill();
         skill.setUserId(userId);
         skill.setSkillName(dto.getSkillName().trim());
-        skill.setSkillLevel(dto.getSkillLevel());
-        skill.setExperienceYears(dto.getExperienceYears());
+        skill.setLevel(dto.getLevel());
         skill.setCreatedAt(LocalDateTime.now());
-        skill.setUpdatedAt(LocalDateTime.now());
 
         userSkillMapper.insert(skill);
         log.info("用户 {} 添加技能: {}", userId, skill.getSkillName());
@@ -41,13 +39,9 @@ public class UserSkillServiceImpl implements UserSkillService {
     public UserSkill updateSkill(Long userId, Long skillId, UpdateSkillDTO dto) {
         UserSkill skill = getSkill(userId, skillId);
 
-        if (dto.getSkillLevel() != null) {
-            skill.setSkillLevel(dto.getSkillLevel());
+        if (dto.getLevel() != null) {
+            skill.setLevel(dto.getLevel());
         }
-        if (dto.getExperienceYears() != null) {
-            skill.setExperienceYears(dto.getExperienceYears());
-        }
-        skill.setUpdatedAt(LocalDateTime.now());
 
         userSkillMapper.updateById(skill);
         log.info("用户 {} 更新技能: {}", userId, skill.getSkillName());

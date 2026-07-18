@@ -20,15 +20,21 @@ public class MatchAnalysis {
 
     private Long jdId;
 
+    private Double jdMatchScore;
+
     private Double matchScore;
 
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private String matchedSkills;
+    private String masteredJson;
 
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private String missingSkills;
+    private String needImproveJson;
 
-    private String analysisReport;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private String notKnownJson;
+
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private String priorityJson;
 
     private LocalDateTime createdAt;
 }

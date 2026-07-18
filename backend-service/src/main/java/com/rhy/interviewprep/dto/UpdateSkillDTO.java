@@ -1,13 +1,13 @@
 package com.rhy.interviewprep.dto;
 
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 @Data
 public class UpdateSkillDTO {
 
-    @Pattern(regexp = "^(了解|熟悉|精通)$", message = "掌握程度只能是：了解、熟悉、精通")
-    private String skillLevel;
-
-    private Integer experienceYears;
+    @Min(value = 1, message = "掌握程度最小为1")
+    @Max(value = 3, message = "掌握程度最大为3")
+    private Integer level;
 }
