@@ -59,8 +59,8 @@
         </dependency>
 
         <dependency>
-            <groupId>io.github.alexcheng1982</groupId>
-            <artifactId>spring-ai-dashscope-spring-boot-starter</artifactId>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-openai</artifactId>
         </dependency>
 
         <dependency>
