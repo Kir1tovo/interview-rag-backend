@@ -21,3 +21,12 @@ export const jdApi = {
   list: (params) => request.get('/jd/list', { params }),
   detail: (id) => request.get(`/jd/${id}`)
 }
+
+export const learningPlanApi = {
+  generate: (matchId) => request.post(`/learning-plan/generate/${matchId}`),
+  regenerate: (planId) => request.post(`/learning-plan/regenerate/${planId}`),
+  detail: (planId) => request.get(`/learning-plan/${planId}`),
+  list: () => request.get('/learning-plan/list'),
+  listByJd: (jdId) => request.get(`/learning-plan/list/${jdId}`),
+  delete: (planId) => request.delete(`/learning-plan/${planId}`)
+}

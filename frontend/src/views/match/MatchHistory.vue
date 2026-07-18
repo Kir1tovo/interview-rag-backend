@@ -45,9 +45,10 @@
             {{ formatTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="handleView(row)">查看详情</el-button>
+            <el-button size="small" type="primary" @click="handleGeneratePlan(row)">生成学习计划</el-button>
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -144,9 +145,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Clock } from '@element-plus/icons-vue'
-import { matchApi } from '@/utils/api'
+import { matchApi, learningPlanApi } from '@/utils/api'
+
+const router = useRouter()
 
 const loading = ref(false)
 const matchList = ref([])
@@ -207,6 +211,21 @@ const handleDelete = async (row) => {
   } catch (e) {
     // 错误已在拦截器处理
   }
+}
+
+const handleGeneratePlan = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      '将基于此匹配分析结果生成学习计划，是否继续？',
+      '生成学习计划',
+      { confirmButtonText: '生成', cancelButtonText: '取消', type: 'info' }
+    )
+  } catch {
+    return
+  }
+
+  ElMessage.info('学习计划正在后台生成，请稍后在学习计划列表查看')
+  learningPlanApi.generate(row.id).catch(() => {})
 }
 
 onMounted(fetchMatchHistory)
