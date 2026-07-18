@@ -30,5 +30,5 @@ public class ZhipuAiProperties {
     /**
      * 超时时间（毫秒）
      */
-    private Integer timeout = 60000;
+    private Integer timeout = 180000;
 }
