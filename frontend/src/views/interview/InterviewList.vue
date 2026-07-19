@@ -139,7 +139,7 @@ const categoryOptions = ref([
   '前端', 'Linux', '操作系统', '其他'
 ])
 
-const companyOptions = ref(['京东', '阿里巴巴', '腾讯', '字节跳动', '美团', '百度', '华为', '拼多多'])
+const companyOptions = ref(['京东', '搜狐', '腾讯', '网易', '美团', '百度', '华为', '拼多多'])
 
 const showImportDialog = ref(false)
 const importing = ref(false)

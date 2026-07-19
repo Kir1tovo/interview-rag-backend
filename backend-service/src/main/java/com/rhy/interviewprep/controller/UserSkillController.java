@@ -16,6 +16,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 用户技能控制器
+ * 提供技能 CRUD、常用技能列表查询等接口
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/skills")
@@ -24,6 +28,12 @@ public class UserSkillController {
 
     private final UserSkillService userSkillService;
 
+    /**
+     * 添加用户技能
+     *
+     * @param dto 技能信息（skillName、level、category）
+     * @return 添加后的技能实体
+     */
     @PostMapping
     public Result<UserSkill> add(@Valid @RequestBody AddSkillDTO dto) {
         Long userId = SecurityUtils.getCurrentUserId();
@@ -31,6 +41,13 @@ public class UserSkillController {
         return Result.success(skill);
     }
 
+    /**
+     * 更新用户技能
+     *
+     * @param id  技能 ID
+     * @param dto 更新信息（skillName、level、category）
+     * @return 更新后的技能实体
+     */
     @PutMapping("/{id}")
     public Result<UserSkill> update(@PathVariable Long id, @Valid @RequestBody UpdateSkillDTO dto) {
         Long userId = SecurityUtils.getCurrentUserId();
@@ -38,6 +55,12 @@ public class UserSkillController {
         return Result.success(skill);
     }
 
+    /**
+     * 删除用户技能
+     *
+     * @param id 技能 ID
+     * @return 操作结果
+     */
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         Long userId = SecurityUtils.getCurrentUserId();
@@ -45,6 +68,11 @@ public class UserSkillController {
         return Result.success();
     }
 
+    /**
+     * 获取当前用户的所有技能列表
+     *
+     * @return 技能列表
+     */
     @GetMapping
     public Result<List<UserSkill>> list() {
         Long userId = SecurityUtils.getCurrentUserId();
@@ -52,6 +80,12 @@ public class UserSkillController {
         return Result.success(skills);
     }
 
+    /**
+     * 获取单个技能详情
+     *
+     * @param id 技能 ID
+     * @return 技能详情
+     */
     @GetMapping("/{id}")
     public Result<UserSkill> get(@PathVariable Long id) {
         Long userId = SecurityUtils.getCurrentUserId();
@@ -59,6 +93,12 @@ public class UserSkillController {
         return Result.success(skill);
     }
 
+    /**
+     * 获取常用技能列表
+     * 返回按分类组织的常见技术技能，供前端技能选择器使用
+     *
+     * @return 分类技能列表（programmingLanguages、frameworks、databases、cloud、tools、all）
+     */
     @GetMapping("/common")
     public Result<Map<String, List<String>>> getCommonSkills() {
         Map<String, List<String>> skills = new HashMap<>();
