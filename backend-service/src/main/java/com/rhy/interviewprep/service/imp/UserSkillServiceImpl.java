@@ -28,10 +28,11 @@ public class UserSkillServiceImpl implements UserSkillService {
         skill.setUserId(userId);
         skill.setSkillName(dto.getSkillName().trim());
         skill.setLevel(dto.getLevel());
+        skill.setCategory(dto.getCategory() != null ? dto.getCategory() : "tech");
         skill.setCreatedAt(LocalDateTime.now());
 
         userSkillMapper.insert(skill);
-        log.info("用户 {} 添加技能: {}", userId, skill.getSkillName());
+        log.info("用户 {} 添加技能: {}（类型: {}）", userId, skill.getSkillName(), skill.getCategory());
         return skill;
     }
 
@@ -42,9 +43,12 @@ public class UserSkillServiceImpl implements UserSkillService {
         if (dto.getLevel() != null) {
             skill.setLevel(dto.getLevel());
         }
+        if (dto.getCategory() != null) {
+            skill.setCategory(dto.getCategory());
+        }
 
         userSkillMapper.updateById(skill);
-        log.info("用户 {} 更新技能: {}", userId, skill.getSkillName());
+        log.info("用户 {} 更新技能: {}（类型: {}）", userId, skill.getSkillName(), skill.getCategory());
         return skill;
     }
 

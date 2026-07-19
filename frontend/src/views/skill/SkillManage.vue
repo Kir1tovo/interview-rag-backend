@@ -3,6 +3,12 @@
     <!-- 添加技能弹窗 -->
     <el-dialog v-model="addDialogVisible" title="添加技能" width="500px">
       <el-form :model="addForm" :rules="addRules" ref="addFormRef" label-width="100px">
+        <el-form-item label="技能类型" prop="category">
+          <el-radio-group v-model="addForm.category" @change="handleCategoryChange">
+            <el-radio value="tech">技术栈</el-radio>
+            <el-radio value="soft">软技能</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="技能名称" prop="skillName">
           <el-autocomplete
             v-model="addForm.skillName"
@@ -15,12 +21,12 @@
             </template>
           </el-autocomplete>
           <div class="common-skills">
-            <span class="label">常用技能：</span>
+            <span class="label">常用{{ addForm.category === 'soft' ? '软技能' : '技能' }}：</span>
             <el-tag
-              v-for="skill in commonSkills.slice(0, 8)"
+              v-for="skill in currentCommonSkills.slice(0, 8)"
               :key="skill"
               size="small"
-              type="info"
+              :type="addForm.category === 'soft' ? 'warning' : 'info'"
               @click="addForm.skillName = skill"
               class="clickable-tag"
             >
@@ -43,10 +49,16 @@
     </el-dialog>
 
     <!-- 更新技能弹窗 -->
-    <el-dialog v-model="updateDialogVisible" title="修改掌握程度" width="400px">
+    <el-dialog v-model="updateDialogVisible" title="修改技能" width="400px">
       <el-form :model="updateForm" label-width="100px">
         <el-form-item label="技能名称">
           <span>{{ updateForm.skillName }}</span>
+        </el-form-item>
+        <el-form-item label="技能类型">
+          <el-radio-group v-model="updateForm.category">
+            <el-radio value="tech">技术栈</el-radio>
+            <el-radio value="soft">软技能</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="掌握程度">
           <el-radio-group v-model="updateForm.level">
@@ -71,19 +83,54 @@
       </el-button>
     </div>
 
-    <!-- 技能列表 -->
+    <!-- 技术栈技能 -->
     <el-card shadow="never" v-loading="loading">
       <template #header>
         <div class="card-header">
-          <el-icon><FolderOpened /></el-icon>
-          <span>我的技能列表</span>
-          <span class="count">({{ skills.length }} 项)</span>
+          <el-icon><Monitor /></el-icon>
+          <span>技术栈</span>
+          <span class="count">({{ techSkills.length }} 项)</span>
         </div>
       </template>
 
-      <el-empty v-if="!loading && !skills.length" description="暂无技能，请添加" />
+      <el-empty v-if="!loading && !techSkills.length" description="暂无技术栈技能，请添加" />
 
-      <el-table v-else :data="skills" border>
+      <el-table v-else :data="techSkills" border>
+        <el-table-column prop="skillName" label="技能名称" min-width="180" />
+        <el-table-column prop="level" label="掌握程度" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getLevelTagType(row.level)" size="small">
+              {{ getLevelText(row.level) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="添加时间" width="180">
+          <template #default="{ row }">
+            {{ formatTime(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" @click="openUpdateDialog(row)">编辑</el-button>
+            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
+    <!-- 软技能 -->
+    <el-card shadow="never" v-loading="loading">
+      <template #header>
+        <div class="card-header">
+          <el-icon><ChatDotRound /></el-icon>
+          <span>软技能</span>
+          <span class="count">({{ softSkills.length }} 项)</span>
+        </div>
+      </template>
+
+      <el-empty v-if="!loading && !softSkills.length" description="暂无软技能，请添加" />
+
+      <el-table v-else :data="softSkills" border>
         <el-table-column prop="skillName" label="技能名称" min-width="180" />
         <el-table-column prop="level" label="掌握程度" width="120">
           <template #default="{ row }">
@@ -109,26 +156,37 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, FolderOpened } from '@element-plus/icons-vue'
+import { Plus, Search, Monitor, ChatDotRound } from '@element-plus/icons-vue'
 import { skillApi } from '@/utils/api'
 
 const loading = ref(false)
 const skills = ref([])
-const commonSkills = ref([])
+const commonTechSkills = ref([])
+const commonSoftSkills = ref([])
 
 const addDialogVisible = ref(false)
 const addFormRef = ref(null)
-const addForm = ref({ skillName: '', level: 2 })
+const addForm = ref({ skillName: '', level: 2, category: 'tech' })
 
 const updateDialogVisible = ref(false)
-const updateForm = ref({ id: null, skillName: '', level: 2 })
+const updateForm = ref({ id: null, skillName: '', level: 2, category: 'tech' })
 
 const addRules = {
   skillName: [{ required: true, message: '请输入技能名称', trigger: 'blur' }],
-  level: [{ required: true, message: '请选择掌握程度', trigger: 'change' }]
+  level: [{ required: true, message: '请选择掌握程度', trigger: 'change' }],
+  category: [{ required: true, message: '请选择技能类型', trigger: 'change' }]
 }
+
+// 按category分类
+const techSkills = computed(() => skills.value.filter(s => s.category !== 'soft'))
+const softSkills = computed(() => skills.value.filter(s => s.category === 'soft'))
+
+// 当前添加弹窗的常用技能列表
+const currentCommonSkills = computed(() => {
+  return addForm.value.category === 'soft' ? commonSoftSkills.value : commonTechSkills.value
+})
 
 const getLevelText = (level) => {
   const map = { 1: '了解', 2: '熟悉', 3: '精通' }
@@ -160,14 +218,16 @@ const fetchSkills = async () => {
 const fetchCommonSkills = async () => {
   try {
     const res = await skillApi.common()
-    commonSkills.value = res.data.all || []
+    commonTechSkills.value = res.data.allTech || []
+    commonSoftSkills.value = res.data.allSoft || []
   } catch (e) {
     // 错误已在拦截器处理
   }
 }
 
 const fetchSkillSuggestions = (query, callback) => {
-  const suggestions = commonSkills.value
+  const pool = addForm.value.category === 'soft' ? commonSoftSkills.value : commonTechSkills.value
+  const suggestions = pool
     .filter(skill => skill.toLowerCase().includes(query.toLowerCase()))
     .slice(0, 10)
     .map(skill => ({ value: skill }))
@@ -178,8 +238,12 @@ const handleSkillSelect = (item) => {
   addForm.value.skillName = item.value
 }
 
+const handleCategoryChange = () => {
+  addForm.value.skillName = ''
+}
+
 const openAddDialog = () => {
-  addForm.value = { skillName: '', level: 2 }
+  addForm.value = { skillName: '', level: 2, category: 'tech' }
   addDialogVisible.value = true
 }
 
@@ -198,13 +262,21 @@ const handleAdd = async () => {
 }
 
 const openUpdateDialog = (row) => {
-  updateForm.value = { id: row.id, skillName: row.skillName, level: row.level }
+  updateForm.value = {
+    id: row.id,
+    skillName: row.skillName,
+    level: row.level,
+    category: row.category || 'tech'
+  }
   updateDialogVisible.value = true
 }
 
 const handleUpdate = async () => {
   try {
-    await skillApi.update(updateForm.value.id, { level: updateForm.value.level })
+    await skillApi.update(updateForm.value.id, {
+      level: updateForm.value.level,
+      category: updateForm.value.category
+    })
     ElMessage.success('更新成功')
     updateDialogVisible.value = false
     fetchSkills()

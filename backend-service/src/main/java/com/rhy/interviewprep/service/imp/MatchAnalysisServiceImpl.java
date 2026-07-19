@@ -60,7 +60,24 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
                         .eq(UserSkill::getUserId, userId)
         );
 
-        Map<String, UserSkill> userSkillMap = userSkills.stream()
+        // 按category区分用户技能：技术栈和软技能
+        List<UserSkill> techSkills = userSkills.stream()
+                .filter(s -> "soft".equalsIgnoreCase(s.getCategory()))
+                .toList();
+        List<UserSkill> softSkills = userSkills.stream()
+                .filter(s -> !"soft".equalsIgnoreCase(s.getCategory()))
+                .toList();
+
+        // 技术栈技能Map（精确匹配用）
+        Map<String, UserSkill> techSkillMap = techSkills.stream()
+                .collect(Collectors.toMap(
+                        s -> s.getSkillName().toLowerCase(),
+                        s -> s,
+                        (existing, replacement) -> existing
+                ));
+
+        // 软技能Map（精确匹配用）
+        Map<String, UserSkill> softSkillMap = softSkills.stream()
                 .collect(Collectors.toMap(
                         s -> s.getSkillName().toLowerCase(),
                         s -> s,
@@ -69,8 +86,20 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
 
         JdRequirements jdRequirements = parseJdRequirements(jd);
 
-        List<MatchResultDTO.SkillMatchDetail> techMatches = matchTechSkills(userSkillMap, jdRequirements.techRequired, jdRequirements.techPreferred);
-        List<MatchResultDTO.SkillMatchDetail> softMatches = matchSoftSkills(userSkillMap, jdRequirements.softRequired, jdRequirements.softPreferred);
+        // 合并所有JD技能，一次LLM调用完成语义匹配
+        List<String> allJdSkills = new ArrayList<>();
+        allJdSkills.addAll(jdRequirements.techRequired);
+        allJdSkills.addAll(jdRequirements.techPreferred);
+        allJdSkills.addAll(jdRequirements.softRequired);
+        allJdSkills.addAll(jdRequirements.softPreferred);
+
+        // LLM语义匹配：将所有用户技能传给LLM
+        Map<String, LlmSkillMatch> llmMatchMap = matchSkillsWithLlm(allJdSkills, userSkills);
+
+        // 技术栈匹配：只用用户的技术栈技能
+        List<MatchResultDTO.SkillMatchDetail> techMatches = matchTechSkills(techSkillMap, jdRequirements.techRequired, jdRequirements.techPreferred, llmMatchMap);
+        // 软技能匹配：只用用户的软技能
+        List<MatchResultDTO.SkillMatchDetail> softMatches = matchSoftSkills(softSkillMap, jdRequirements.softRequired, jdRequirements.softPreferred, llmMatchMap);
 
         double techScore = calculateScore(techMatches);
         double softScore = calculateScore(softMatches);
@@ -149,14 +178,15 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
 
     private List<MatchResultDTO.SkillMatchDetail> matchTechSkills(Map<String, UserSkill> userSkillMap,
                                                                   List<String> required,
-                                                                  List<String> preferred) {
+                                                                  List<String> preferred,
+                                                                  Map<String, LlmSkillMatch> llmMatchMap) {
         List<MatchResultDTO.SkillMatchDetail> matches = new ArrayList<>();
 
         for (String skill : required) {
-            matches.add(createMatchDetail(skill, true, userSkillMap));
+            matches.add(createMatchDetail(skill, true, userSkillMap, llmMatchMap));
         }
         for (String skill : preferred) {
-            matches.add(createMatchDetail(skill, false, userSkillMap));
+            matches.add(createMatchDetail(skill, false, userSkillMap, llmMatchMap));
         }
 
         return matches;
@@ -164,47 +194,57 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
 
     private List<MatchResultDTO.SkillMatchDetail> matchSoftSkills(Map<String, UserSkill> userSkillMap,
                                                                    List<String> required,
-                                                                   List<String> preferred) {
+                                                                   List<String> preferred,
+                                                                   Map<String, LlmSkillMatch> llmMatchMap) {
         List<MatchResultDTO.SkillMatchDetail> matches = new ArrayList<>();
 
         for (String skill : required) {
-            boolean hasSkill = userSkillMap.containsKey(skill.toLowerCase());
-            matches.add(MatchResultDTO.SkillMatchDetail.builder()
-                    .skillName(skill)
-                    .jdLevel("了解")
-                    .userLevel(hasSkill ? "具备" : "不具备")
-                    .score(hasSkill ? 100 : 0)
-                    .matchStatus(hasSkill ? "已掌握" : "完全不会")
-                    .isRequired(true)
-                    .build());
+            matches.add(createSoftMatchDetail(skill, true, userSkillMap, llmMatchMap));
         }
         for (String skill : preferred) {
-            boolean hasSkill = userSkillMap.containsKey(skill.toLowerCase());
-            matches.add(MatchResultDTO.SkillMatchDetail.builder()
-                    .skillName(skill)
-                    .jdLevel("了解")
-                    .userLevel(hasSkill ? "具备" : "不具备")
-                    .score(hasSkill ? 100 : 0)
-                    .matchStatus(hasSkill ? "已掌握" : "完全不会")
-                    .isRequired(false)
-                    .build());
+            matches.add(createSoftMatchDetail(skill, false, userSkillMap, llmMatchMap));
         }
 
         return matches;
     }
 
-    private MatchResultDTO.SkillMatchDetail createMatchDetail(String skillName, boolean isRequired, Map<String, UserSkill> userSkillMap) {
-        UserSkill userSkill = userSkillMap.get(skillName.toLowerCase());
+    /**
+     * 创建技术技能匹配详情（支持LLM语义匹配）
+     * <p>匹配优先级：精确匹配 > LLM语义匹配 > 无匹配</p>
+     * <p>LLM匹配类型与评分：
+     * <ul>
+     *   <li>exact：精确匹配，按等级比较（100/60）</li>
+     *   <li>subset：用户技能是JD要求的子集（如MySQL→数据库），按等级比较</li>
+     *   <li>superset：用户技能比JD要求更宽泛（如数据库→MySQL），70分</li>
+     *   <li>related：相关技能（如PostgreSQL→MySQL），40分</li>
+     *   <li>none：无匹配，0分</li>
+     * </ul>
+     * </p>
+     */
+    private MatchResultDTO.SkillMatchDetail createMatchDetail(String skillName, boolean isRequired,
+                                                               Map<String, UserSkill> userSkillMap,
+                                                               Map<String, LlmSkillMatch> llmMatchMap) {
         String jdLevel = isRequired ? "熟悉" : "了解";
         int jdLevelRank = isRequired ? 2 : 1;
+
+        // 先尝试精确字符串匹配
+        UserSkill userSkill = userSkillMap.get(skillName.toLowerCase());
+
+        // 如果精确匹配失败，尝试LLM语义匹配
+        LlmSkillMatch llmMatch = llmMatchMap.get(skillName.toLowerCase());
 
         String userLevel;
         int score;
         String matchStatus;
+        String matchedUserSkill = null;
+        String matchType = "none";
 
         if (userSkill != null) {
+            // 精确匹配成功
             int userLevelRank = userSkill.getLevel();
             userLevel = LEVEL_MAP.getOrDefault(userLevelRank, "未知");
+            matchType = "exact";
+            matchedUserSkill = userSkill.getSkillName();
 
             if (userLevelRank >= jdLevelRank) {
                 score = 100;
@@ -213,7 +253,28 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
                 score = 60;
                 matchStatus = "需要加强";
             }
+        } else if (llmMatch != null && llmMatch.matchedUserSkill != null
+                && !"none".equals(llmMatch.matchType)) {
+            // LLM语义匹配成功
+            matchType = llmMatch.matchType;
+            matchedUserSkill = llmMatch.matchedUserSkill;
+
+            // 查找匹配到的用户技能对象
+            UserSkill matchedSkill = userSkillMap.get(matchedUserSkill.toLowerCase());
+
+            if (matchedSkill != null) {
+                int userLevelRank = matchedSkill.getLevel();
+                userLevel = matchedSkill.getSkillName() + "(" + LEVEL_MAP.getOrDefault(userLevelRank, "未知") + ")";
+                score = calculateMatchScore(matchType, userLevelRank, jdLevelRank, llmMatch.confidence);
+            } else {
+                // LLM匹配到了技能名但用户技能表中找不到（名称不完全一致）
+                userLevel = matchedUserSkill;
+                score = calculateMatchScore(matchType, 1, jdLevelRank, llmMatch.confidence);
+            }
+
+            matchStatus = score >= 100 ? "已掌握" : (score > 0 ? "需要加强" : "完全不会");
         } else {
+            // 无匹配
             userLevel = "无";
             score = 0;
             matchStatus = "完全不会";
@@ -226,7 +287,166 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
                 .score(score)
                 .matchStatus(matchStatus)
                 .isRequired(isRequired)
+                .matchedUserSkill(matchedUserSkill)
+                .matchType(matchType)
                 .build();
+    }
+
+    /**
+     * 创建软技能匹配详情（支持LLM语义匹配）
+     * <p>软技能为二值判断（具备/不具备），语义匹配即视为具备</p>
+     */
+    private MatchResultDTO.SkillMatchDetail createSoftMatchDetail(String skillName, boolean isRequired,
+                                                                    Map<String, UserSkill> userSkillMap,
+                                                                    Map<String, LlmSkillMatch> llmMatchMap) {
+        // 先尝试精确匹配
+        boolean hasSkill = userSkillMap.containsKey(skillName.toLowerCase());
+
+        // 如果精确匹配失败，尝试LLM语义匹配
+        LlmSkillMatch llmMatch = llmMatchMap.get(skillName.toLowerCase());
+
+        String userLevel;
+        int score;
+        String matchStatus;
+        String matchedUserSkill = null;
+        String matchType = "none";
+
+        if (hasSkill) {
+            userLevel = "具备";
+            score = 100;
+            matchStatus = "已掌握";
+            matchType = "exact";
+            matchedUserSkill = skillName;
+        } else if (llmMatch != null && llmMatch.matchedUserSkill != null
+                && !"none".equals(llmMatch.matchType)) {
+            matchType = llmMatch.matchType;
+            matchedUserSkill = llmMatch.matchedUserSkill;
+            userLevel = "具备(" + matchedUserSkill + ")";
+            score = 100;
+            matchStatus = "已掌握";
+        } else {
+            userLevel = "不具备";
+            score = 0;
+            matchStatus = "完全不会";
+        }
+
+        return MatchResultDTO.SkillMatchDetail.builder()
+                .skillName(skillName)
+                .jdLevel("了解")
+                .userLevel(userLevel)
+                .score(score)
+                .matchStatus(matchStatus)
+                .isRequired(isRequired)
+                .matchedUserSkill(matchedUserSkill)
+                .matchType(matchType)
+                .build();
+    }
+
+    /**
+     * 根据LLM匹配类型计算技能匹配分数
+     *
+     * @param matchType     匹配类型：exact/subset/superset/related/none
+     * @param userLevelRank 用户技能等级（1=了解,2=熟悉,3=精通）
+     * @param jdLevelRank   JD要求等级
+     * @param confidence    LLM匹配置信度（0~1）
+     * @return 匹配分数（0~100）
+     */
+    private int calculateMatchScore(String matchType, int userLevelRank, int jdLevelRank, double confidence) {
+        int baseScore;
+        switch (matchType) {
+            case "exact":
+                // 精确匹配：按等级比较
+                baseScore = userLevelRank >= jdLevelRank ? 100 : 60;
+                break;
+            case "subset":
+                // 用户技能是JD要求的子集（如用户有MySQL，JD要求数据库）→ 满足要求
+                baseScore = userLevelRank >= jdLevelRank ? 100 : 60;
+                break;
+            case "superset":
+                // 用户技能比JD要求更宽泛（如用户有数据库，JD要求MySQL）→ 部分满足
+                baseScore = 70;
+                break;
+            case "related":
+                // 相关技能（如用户有PostgreSQL，JD要求MySQL）→ 有一定基础
+                baseScore = 40;
+                break;
+            default:
+                baseScore = 0;
+        }
+        // 按置信度调整分数
+        return (int) Math.round(baseScore * confidence);
+    }
+
+    /**
+     * 使用LLM进行技能语义匹配
+     * <p>将所有JD技能和用户技能一次性发送给LLM，获取语义匹配关系。
+     * 解决"数据库"vs"MySQL"等模糊/上下级技能无法精确字符串匹配的问题。</p>
+     * <p>如果LLM调用失败，返回空Map，调用方将回退到精确字符串匹配。</p>
+     *
+     * @param jdSkills   JD中的技能要求列表
+     * @param userSkills 用户自定义技能列表
+     * @return JD技能名(小写) → LLM匹配结果的映射
+     */
+    private Map<String, LlmSkillMatch> matchSkillsWithLlm(List<String> jdSkills, List<UserSkill> userSkills) {
+        if (jdSkills.isEmpty() || userSkills.isEmpty()) {
+            return Map.of();
+        }
+
+        try {
+            String jdSkillsStr = String.join(", ", jdSkills);
+            String userSkillsStr = userSkills.stream()
+                    .map(s -> s.getSkillName() + "(" + LEVEL_MAP.getOrDefault(s.getLevel(), "未知") + ")")
+                    .collect(Collectors.joining(", "));
+
+            String userPrompt = String.format(
+                    MatchAnalysisPrompt.SKILL_MATCH_USER_PROMPT_TEMPLATE,
+                    jdSkillsStr, userSkillsStr);
+
+            List<Message> messages = List.of(
+                    new SystemMessage(MatchAnalysisPrompt.SKILL_MATCH_SYSTEM_PROMPT),
+                    new UserMessage(userPrompt));
+
+            Prompt prompt = new Prompt(messages);
+            ChatResponse chatResponse = chatModel.call(prompt);
+
+            String response = chatResponse.getResult().getOutput().getText();
+            String json = response.trim();
+
+            // 去除markdown代码块标记
+            if (json.startsWith("```json")) {
+                json = json.substring(7);
+            } else if (json.startsWith("```")) {
+                json = json.substring(3);
+            }
+            if (json.endsWith("```")) {
+                json = json.substring(0, json.length() - 3);
+            }
+            json = json.trim();
+
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode matchesNode = root.get("matches");
+
+            Map<String, LlmSkillMatch> result = new HashMap<>();
+            if (matchesNode != null && matchesNode.isArray()) {
+                for (JsonNode matchNode : matchesNode) {
+                    LlmSkillMatch match = new LlmSkillMatch();
+                    match.jdSkill = matchNode.get("jdSkill").asText();
+                    match.matchedUserSkill =
+                            matchNode.has("matchedUserSkill") && !matchNode.get("matchedUserSkill").isNull()
+                                    ? matchNode.get("matchedUserSkill").asText() : null;
+                    match.matchType = matchNode.get("matchType").asText("none");
+                    match.confidence = matchNode.has("confidence") ? matchNode.get("confidence").asDouble() : 0.5;
+                    result.put(match.jdSkill.toLowerCase(), match);
+                }
+            }
+
+            log.info("LLM技能语义匹配完成，共匹配{}个JD技能", result.size());
+            return result;
+
+        } catch (Exception e) {
+            log.warn("LLM技能语义匹配失败，将回退到精确字符串匹配", e);
+            return Map.of();
+        }
     }
 
     private double calculateScore(List<MatchResultDTO.SkillMatchDetail> matches) {
@@ -426,6 +646,14 @@ public class MatchAnalysisServiceImpl implements MatchAnalysisService {
         MatchAnalysis analysis = getById(userId, id);
         matchAnalysisMapper.deleteById(id);
         log.info("用户 {} 删除匹配分析记录: {}", userId, id);
+    }
+
+    /** LLM技能语义匹配结果 */
+    private static class LlmSkillMatch {
+        String jdSkill;
+        String matchedUserSkill;
+        String matchType;
+        double confidence;
     }
 
     private static class JdRequirements {

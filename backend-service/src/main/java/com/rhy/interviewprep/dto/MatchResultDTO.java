@@ -44,6 +44,10 @@ public class MatchResultDTO {
         private Integer score;
         private String matchStatus;
         private Boolean isRequired;
+        /** 匹配到的用户技能名称（语义匹配时可能不同于JD技能名，如JD"数据库"匹配用户"MySQL"） */
+        private String matchedUserSkill;
+        /** 语义匹配类型：exact/subset/superset/related/none */
+        private String matchType;
     }
 
     @Data

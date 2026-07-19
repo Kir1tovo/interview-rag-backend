@@ -20,5 +20,8 @@ public class UserSkill {
 
     private Integer level;
 
+    /** 技能类型：tech-技术栈，soft-软技能，默认tech */
+    private String category;
+
     private LocalDateTime createdAt;
 }

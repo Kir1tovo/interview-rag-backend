@@ -95,19 +95,37 @@ public class UserSkillController {
 
     /**
      * 获取常用技能列表
-     * 返回按分类组织的常见技术技能，供前端技能选择器使用
+     * 返回按分类组织的常见技能，供前端技能选择器使用
      *
-     * @return 分类技能列表（programmingLanguages、frameworks、databases、cloud、tools、all）
+     * @return 分类技能列表（tech分类+soft分类+all汇总）
      */
     @GetMapping("/common")
-    public Result<Map<String, List<String>>> getCommonSkills() {
-        Map<String, List<String>> skills = new HashMap<>();
-        skills.put("programmingLanguages", CommonSkills.PROGRAMMING_LANGUAGES);
-        skills.put("frameworks", CommonSkills.FRAMEWORKS);
-        skills.put("databases", CommonSkills.DATABASES);
-        skills.put("cloud", CommonSkills.CLOUD);
-        skills.put("tools", CommonSkills.TOOLS);
-        skills.put("all", CommonSkills.ALL_COMMON_SKILLS);
+    public Result<Map<String, Object>> getCommonSkills() {
+        Map<String, Object> skills = new HashMap<>();
+
+        // 技术栈分类
+        Map<String, List<String>> techCategories = new HashMap<>();
+        techCategories.put("programmingLanguages", CommonSkills.PROGRAMMING_LANGUAGES);
+        techCategories.put("frameworks", CommonSkills.FRAMEWORKS);
+        techCategories.put("databases", CommonSkills.DATABASES);
+        techCategories.put("cloud", CommonSkills.CLOUD);
+        techCategories.put("tools", CommonSkills.TOOLS);
+        skills.put("tech", techCategories);
+        skills.put("allTech", CommonSkills.ALL_COMMON_TECH_SKILLS);
+
+        // 软技能分类
+        Map<String, List<String>> softCategories = new HashMap<>();
+        softCategories.put("communication", CommonSkills.COMMUNICATION);
+        softCategories.put("teamwork", CommonSkills.TEAMWORK);
+        softCategories.put("thinking", CommonSkills.THINKING);
+        softCategories.put("learning", CommonSkills.LEARNING);
+        softCategories.put("leadership", CommonSkills.LEADERSHIP);
+        skills.put("soft", softCategories);
+        skills.put("allSoft", CommonSkills.ALL_COMMON_SOFT_SKILLS);
+
+        // 兼容旧接口
+        skills.put("all", CommonSkills.ALL_COMMON_TECH_SKILLS);
+
         return Result.success(skills);
     }
 }

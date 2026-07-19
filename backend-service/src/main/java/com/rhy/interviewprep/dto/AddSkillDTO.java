@@ -16,4 +16,7 @@ public class AddSkillDTO {
     @Min(value = 1, message = "掌握程度最小为1")
     @Max(value = 3, message = "掌握程度最大为3")
     private Integer level;
+
+    /** 技能类型：tech-技术栈，soft-软技能，默认tech */
+    private String category;
 }
