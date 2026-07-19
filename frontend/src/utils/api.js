@@ -40,3 +40,5 @@ export const interviewApi = {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
+
+export const sendAgentMessage = (data) => request.post('/agent/message', data, { timeout: 180000 })

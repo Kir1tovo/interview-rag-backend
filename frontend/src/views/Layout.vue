@@ -1,7 +1,7 @@
 <template>
   <el-container class="layout-container">
-    <el-aside width="200px">
-      <el-menu :default-active="$route.path" router>
+    <el-aside width="200px" class="aside-container">
+      <el-menu :default-active="$route.path" router class="menu-container">
         <div class="logo">AI 面试准备</div>
         <el-menu-item index="/jd">
           <el-icon><Document /></el-icon>
@@ -32,6 +32,7 @@
           <el-menu-item index="/interview/list">题库列表</el-menu-item>
         </el-sub-menu>
       </el-menu>
+      <AgentDialog />
     </el-aside>
     <el-container>
       <el-header>
@@ -51,6 +52,7 @@
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Document, EditPen, User, DataAnalysis, Reading, Search } from '@element-plus/icons-vue'
+import AgentDialog from '@/components/AgentDialog.vue'
 import request from '@/utils/request'
 import { getUsername, clearLoginInfo } from '@/utils/auth'
 
@@ -94,6 +96,15 @@ const handleLogout = async () => {
   background-color: #fff;
   border-right: 1px solid #e6e6e6;
 }
+.aside-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.menu-container {
+  flex: 1;
+  overflow-y: auto;
+}
 .el-header {
   display: flex;
   justify-content: flex-end;
@@ -108,5 +119,25 @@ const handleLogout = async () => {
 .username {
   color: #606266;
   font-size: 14px;
+}
+
+/* 响应式设计：小屏幕下侧边栏宽度自适应 */
+@media screen and (max-width: 768px) {
+  .aside-container {
+    width: 64px !important;
+  }
+  .aside-container .el-menu {
+    width: 64px;
+  }
+  .aside-container .el-menu span,
+  .aside-container .logo {
+    display: none;
+  }
+  .aside-container .agent-dialog {
+    width: 64px;
+  }
+  .aside-container .agent-toggle span {
+    display: none;
+  }
 }
 </style>
