@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
 import com.rhy.interviewprep.tools.AgentTools;
+import com.rhy.interviewprep.tools.JdAnalysisTools;
 import com.rhy.interviewprep.constants.AgentPromptConstants;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.ai.tool.ToolCallback;
@@ -30,6 +31,9 @@ public class AgentChatConfig {
     @Autowired
     private AgentTools agentTools;
 
+    @Autowired
+    private JdAnalysisTools jdAnalysisTools;
+
     @Lazy
     @Bean
     public ReactAgent agentReactAgent(ChatModel chatModel) {
@@ -43,7 +47,7 @@ public class AgentChatConfig {
 
         // 注册本地 @Tool 工具
         ToolCallback[] localTools = MethodToolCallbackProvider.builder()
-                .toolObjects(agentTools)
+                .toolObjects(agentTools, jdAnalysisTools)
                 .build()
                 .getToolCallbacks();
         if (localTools != null && localTools.length > 0) {

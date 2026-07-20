@@ -20,6 +20,16 @@ public interface JdService {
     JobDescription parseFromImage(MultipartFile file, Long userId);
 
     /**
+     * 从文件路径解析 JD（供 Agent Tool 调用）
+     * 流程：读取文件 → OCR 识别 → DeepSeek 解析 → 保存到数据库
+     *
+     * @param filePath 图片文件路径
+     * @param userId   当前登录用户 ID
+     * @return 解析后的 JD 实体（含 ID）
+     */
+    JobDescription parseFromFilePath(String filePath, Long userId);
+
+    /**
      * 根据 ID 查询 JD 详情
      *
      * @param id     JD ID

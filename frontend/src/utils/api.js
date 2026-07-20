@@ -42,3 +42,8 @@ export const interviewApi = {
 }
 
 export const sendAgentMessage = (data) => request.post('/agent/message', data, { timeout: 180000 })
+
+export const uploadJdImage = (formData) => request.post('/agent/upload-jd', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' },
+  timeout: 60000
+})

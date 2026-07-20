@@ -29,6 +29,11 @@ public class AgentServiceImpl implements AgentService {
             return Result.error(ErrorCode.BAD_REQUEST, "消息内容不能为空");
         }
 
+        // 如果前端传了JD图片路径，拼接到用户消息中，引导Agent自动调用解析工具
+        if (request.getFilePath() != null && !request.getFilePath().trim().isEmpty()) {
+            userMessage = userMessage + "\n\n[JD图片路径: " + request.getFilePath() + "，请使用 parseJdFromImage 工具解析此图片]";
+        }
+
         try {
             AssistantMessage response = agentReactAgent.call(userMessage);
             String reply = response.getText();

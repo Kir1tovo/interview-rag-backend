@@ -25,7 +25,12 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -158,6 +163,41 @@ public class JdServiceImpl implements JdService {
     }
 
     @Override
+    public JobDescription parseFromFilePath(String filePath, Long userId) {
+        Path path = Paths.get(filePath);
+        if (!Files.exists(path) || !Files.isRegularFile(path)) {
+            throw new BusinessException(ErrorCode.OCR_IMAGE_INVALID, "文件不存在或不是有效文件: " + filePath);
+        }
+
+        try {
+            String contentType = Files.probeContentType(path);
+            if (contentType == null) {
+                contentType = "application/octet-stream";
+            }
+            byte[] content = Files.readAllBytes(path);
+            String originalFilename = path.getFileName().toString();
+
+            MultipartFile multipartFile = new PathMultipartFile(path, contentType, content);
+
+            JobDescription jd = parseFromImage(multipartFile, userId);
+
+            // 解析成功后删除临时图片文件（数据已存入数据库，图片不再需要）
+            try {
+                Files.deleteIfExists(path);
+                log.info("临时图片已清理: {}", filePath);
+            } catch (IOException e) {
+                log.warn("临时图片清理失败（不影响业务）: {}", filePath, e);
+            }
+
+            return jd;
+
+        } catch (IOException e) {
+            log.error("读取文件失败: {}", filePath, e);
+            throw new BusinessException(ErrorCode.OCR_IMAGE_INVALID, "读取文件失败: " + e.getMessage());
+        }
+    }
+
+    @Override
     public JobDescription getById(Long id, Long userId) {
         JobDescription jd = jobDescriptionMapper.selectById(id);
         if (jd == null || !jd.getUserId().equals(userId)) {
@@ -184,5 +224,61 @@ public class JdServiceImpl implements JdService {
         }
         jobDescriptionMapper.deleteById(id);
         log.info("JD 记录已删除，ID: {}", id);
+    }
+
+    /**
+     * 基于 Path 的 MultipartFile 简单实现，用于从文件路径构造 MultipartFile
+     */
+    private static class PathMultipartFile implements MultipartFile {
+
+        private final Path path;
+        private final String contentType;
+        private final byte[] content;
+
+        PathMultipartFile(Path path, String contentType, byte[] content) {
+            this.path = path;
+            this.contentType = contentType;
+            this.content = content;
+        }
+
+        @Override
+        public String getName() {
+            return "file";
+        }
+
+        @Override
+        public String getOriginalFilename() {
+            return path.getFileName().toString();
+        }
+
+        @Override
+        public String getContentType() {
+            return contentType;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return content == null || content.length == 0;
+        }
+
+        @Override
+        public long getSize() {
+            return content.length;
+        }
+
+        @Override
+        public byte[] getBytes() {
+            return content;
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            return new ByteArrayInputStream(content);
+        }
+
+        @Override
+        public void transferTo(java.io.File dest) throws IOException {
+            Files.write(dest.toPath(), content);
+        }
     }
 }

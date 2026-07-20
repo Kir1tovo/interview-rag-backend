@@ -36,6 +36,11 @@
         </div>
       </div>
       <div class="agent-input-area">
+        <div v-if="uploadedFilePath" class="uploaded-file-hint">
+          <el-icon><PictureFilled /></el-icon>
+          <span>已附加JD图片</span>
+          <el-icon class="clear-icon" @click="clearUploadedFile"><Close /></el-icon>
+        </div>
         <el-input
           v-model="message"
           placeholder="输入消息..."
@@ -43,6 +48,18 @@
           @keyup.enter="handleSend"
           :disabled="loading"
         >
+          <template #prepend>
+            <label class="upload-btn" :class="{ 'is-loading': uploadingImage }">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/jpg,image/webp,image/bmp"
+                @change="handleImageUpload"
+                :disabled="uploadingImage || loading"
+                style="display: none"
+              />
+              <el-icon><PictureFilled /></el-icon>
+            </label>
+          </template>
           <template #append>
             <el-button @click="handleSend" :disabled="!message.trim() || loading" :loading="loading">
               <el-icon><Promotion /></el-icon>
@@ -56,14 +73,17 @@
 
 <script setup>
 import { ref, nextTick } from 'vue'
-import { ChatDotSquare, ArrowDown, User, Monitor, Promotion } from '@element-plus/icons-vue'
-import { sendAgentMessage } from '@/utils/api'
+import { ChatDotSquare, ArrowDown, User, Monitor, Promotion, PictureFilled, Close } from '@element-plus/icons-vue'
+import { sendAgentMessage, uploadJdImage } from '@/utils/api'
+import { ElMessage } from 'element-plus'
 
 const isExpanded = ref(true)
 const message = ref('')
 const messages = ref([])
 const loading = ref(false)
 const messagesRef = ref(null)
+const uploadedFilePath = ref(null)
+const uploadingImage = ref(false)
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -80,17 +100,60 @@ const toggleDialog = () => {
   }
 }
 
+const handleImageUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // 校验文件类型
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/bmp']
+  if (!allowedTypes.includes(file.type)) {
+    ElMessage.warning('仅支持 JPG、PNG、BMP、WebP 格式的图片')
+    return
+  }
+
+  // 校验文件大小（10MB）
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.warning('图片大小不能超过 10MB')
+    return
+  }
+
+  uploadingImage.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await uploadJdImage(formData)
+    if (res.code === 200 && res.data) {
+      uploadedFilePath.value = res.data
+      ElMessage.success('JD图片上传成功，发送消息时将自动附带图片')
+    } else {
+      ElMessage.error(res.message || '图片上传失败')
+    }
+  } catch {
+    ElMessage.error('图片上传失败，请稍后重试')
+  } finally {
+    uploadingImage.value = false
+    // 清空input，允许重复选择同一文件
+    event.target.value = ''
+  }
+}
+
+const clearUploadedFile = () => {
+  uploadedFilePath.value = null
+}
+
 const handleSend = async () => {
   const text = message.value.trim()
   if (!text || loading.value) return
 
-  messages.value.push({ role: 'user', content: text })
+  const filePath = uploadedFilePath.value
+  messages.value.push({ role: 'user', content: filePath ? `${text} [已附带JD图片]` : text })
   message.value = ''
+  uploadedFilePath.value = null
   scrollToBottom()
 
   loading.value = true
   try {
-    const res = await sendAgentMessage({ message: text })
+    const res = await sendAgentMessage({ message: text, filePath })
     const reply = res.data?.reply || res.data?.content || res.data || '收到消息'
     messages.value.push({ role: 'assistant', content: reply })
   } catch {
@@ -256,6 +319,45 @@ const handleSend = async () => {
   padding: 8px 10px;
   border-top: 1px solid #e6e6e6;
   background-color: #fff;
+}
+
+.uploaded-file-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  margin-bottom: 6px;
+  background-color: #ecf5ff;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #409eff;
+}
+
+.uploaded-file-hint .clear-icon {
+  margin-left: auto;
+  cursor: pointer;
+  color: #909399;
+}
+
+.uploaded-file-hint .clear-icon:hover {
+  color: #f56c6c;
+}
+
+.upload-btn {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #909399;
+  padding: 0 4px;
+}
+
+.upload-btn:hover {
+  color: #409eff;
+}
+
+.upload-btn.is-loading {
+  pointer-events: none;
+  opacity: 0.6;
 }
 
 /* 响应式设计：小屏幕适配 */
