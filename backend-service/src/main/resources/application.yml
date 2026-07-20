@@ -31,6 +31,32 @@ spring:
       embedding:
         options:
           model: text-embedding-v3
+    # MCP Client 配置
+    mcp:
+      client:
+        enabled: true
+        name: interview-prep-mcp-client
+        version: 1.0.0
+        type: SYNC
+        request-timeout: 60s
+        # SSE 远程连接配置（按需启用）
+        # sse:
+        #   connections:
+        #     my-remote-server:
+        #       url: http://localhost:8081
+        # STDIO 本地进程连接配置（按需启用）
+        # stdio:
+        #   connections:
+        #     filesystem:
+        #       command: cmd
+        #       args:
+        #         - "/c"
+        #         - "npx"
+        #         - "-y"
+        #         - "@modelcontextprotocol/server-filesystem"
+        #         - "D:\\rhy\\rag"
+        toolcallback:
+          enabled: true
 
 zhipu:
   ai:

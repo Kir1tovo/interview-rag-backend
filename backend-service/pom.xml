@@ -68,6 +68,12 @@
             <artifactId>spring-ai-alibaba-agent-framework</artifactId>
         </dependency>
 
+        <!-- Spring AI MCP Client - 支持 STDIO 和 SSE 传输协议 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-client</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
