@@ -45,16 +45,25 @@ spring:
         #     my-remote-server:
         #       url: http://localhost:8081
         # STDIO 本地进程连接配置（按需启用）
-        # stdio:
-        #   connections:
-        #     filesystem:
-        #       command: cmd
-        #       args:
-        #         - "/c"
-        #         - "npx"
-        #         - "-y"
-        #         - "@modelcontextprotocol/server-filesystem"
-        #         - "D:\\rhy\\rag"
+        stdio:
+          connections:
+            filesystem:
+              command: cmd
+              args:
+                - "/c"
+                - "npx"
+                - "-y"
+                - "@modelcontextprotocol/server-filesystem"
+                - "D:\\rhy\\rag"
+            memory:
+              command: cmd
+              args:
+                - "/c"
+                - "npx"
+                - "-y"
+                - "@modelcontextprotocol/server-memory"
+              env:
+                MEMORY_FILE_PATH: "D:\\rhy\\rag\\data\\memory.jsonl"
         toolcallback:
           enabled: true
 
