@@ -85,7 +85,7 @@ const router = createRouter({
 
 // 路由守卫：未登录跳转登录页
 router.beforeEach((to, from, next) => {
-  document.title = to.meta.title || 'AI 面试准备平台'
+  document.title = to.meta.title || '智面通'
   const token = getToken()
   if (!token && to.path !== '/login' && to.path !== '/register') {
     next('/login')

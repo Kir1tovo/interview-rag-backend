@@ -2,7 +2,7 @@
   <el-container class="layout-container">
     <el-aside width="200px" class="aside-container">
       <el-menu :default-active="$route.path" router class="menu-container">
-        <div class="logo">AI 面试准备</div>
+        <div class="logo">智面通</div>
         <el-menu-item index="/jd">
           <el-icon><Document /></el-icon>
           <span>JD 管理</span>

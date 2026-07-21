@@ -2,7 +2,7 @@
   <div class="register-container">
     <el-card class="register-card">
       <template #header>
-        <h2>AI 面试准备平台 - 注册</h2>
+        <h2>智面通 - 注册</h2>
       </template>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="用户名" prop="username">
