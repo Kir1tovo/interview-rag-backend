@@ -9,6 +9,7 @@ import com.rhy.interviewprep.constants.InterviewImportPrompt;
 import com.rhy.interviewprep.entity.InterviewQuestion;
 import com.rhy.interviewprep.mapper.InterviewQuestionMapper;
 import com.rhy.interviewprep.service.InterviewImportService;
+import com.rhy.interviewprep.service.InterviewSearchCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.Message;
@@ -41,6 +42,7 @@ public class InterviewImportServiceImpl implements InterviewImportService {
     private final ChatModel chatModel;
     private final EmbeddingModel embeddingModel;
     private final ObjectMapper objectMapper;
+    private final InterviewSearchCacheService searchCacheService;
 
     @Override
     public List<InterviewQuestion> importFromMdFile(MultipartFile file) {
@@ -112,6 +114,12 @@ public class InterviewImportServiceImpl implements InterviewImportService {
         }
 
         log.info("导入完成：成功 {} 条，跳过重复 {} 条，公司：{}", imported.size(), skipped, company);
+
+        // 导入新数据后清除搜索缓存，确保缓存一致性
+        if (!imported.isEmpty()) {
+            searchCacheService.clearAll();
+        }
+
         return imported;
     }
 

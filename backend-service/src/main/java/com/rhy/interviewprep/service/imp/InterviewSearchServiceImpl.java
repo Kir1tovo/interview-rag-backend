@@ -6,6 +6,7 @@ import com.rhy.interviewprep.dto.InterviewSearchRequest;
 import com.rhy.interviewprep.dto.InterviewSearchVO;
 import com.rhy.interviewprep.entity.InterviewQuestion;
 import com.rhy.interviewprep.mapper.InterviewQuestionMapper;
+import com.rhy.interviewprep.service.InterviewSearchCacheService;
 import com.rhy.interviewprep.service.InterviewSearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import java.util.List;
 /**
  * 面经向量检索服务实现
  * 使用 pgvector 余弦距离进行语义相似度检索
+ * 集成 Redis 缓存：热门查询结果缓存 2 小时，减少 Embedding 生成和向量检索开销
  */
 @Slf4j
 @Service
@@ -26,6 +28,7 @@ public class InterviewSearchServiceImpl implements InterviewSearchService {
 
     private final InterviewQuestionMapper interviewQuestionMapper;
     private final EmbeddingModel embeddingModel;
+    private final InterviewSearchCacheService cacheService;
 
     @Override
     public List<InterviewSearchVO> search(InterviewSearchRequest request) {
@@ -36,19 +39,29 @@ public class InterviewSearchServiceImpl implements InterviewSearchService {
         int topK = request.getTopK() != null ? request.getTopK() : 5;
         double minSimilarity = request.getMinSimilarity() != null ? request.getMinSimilarity() : 0.5;
 
-        // 1. 将查询文本转为向量
+        // 1. 尝试从 Redis 缓存获取
+        List<InterviewSearchVO> cachedResults = cacheService.get(request.getQuery(), topK, minSimilarity);
+        if (cachedResults != null) {
+            log.info("缓存命中：query='{}', topK={}, minSimilarity={}, 命中{}条",
+                    request.getQuery(), topK, minSimilarity, cachedResults.size());
+            return cachedResults;
+        }
+
+        // 2. 缓存未命中，执行向量检索
         String queryVector = generateVectorString(request.getQuery());
         if (queryVector == null) {
             log.warn("查询文本生成向量失败：{}", request.getQuery());
             return Collections.emptyList();
         }
 
-        // 2. 执行 pgvector 向量检索
         List<InterviewSearchVO> results = interviewQuestionMapper.searchByVector(
                 queryVector, minSimilarity, topK);
 
         log.info("向量检索完成：query='{}', topK={}, minSimilarity={}, 命中{}条",
                 request.getQuery(), topK, minSimilarity, results.size());
+
+        // 3. 将结果写入缓存
+        cacheService.put(request.getQuery(), topK, minSimilarity, results);
 
         return results;
     }
